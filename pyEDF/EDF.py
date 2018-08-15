@@ -97,7 +97,7 @@ class EDFWriter():
                 fid2.write(fid1.read(meas_info['data_offset'] - 236 - 8))
                 bsize = np.sum(chan_info['n_samps']) * meas_info['data_size']
                 for block in range(self.n_records):
-                    fid2.write(fid1.read(bsize))
+                    fid2.write(fid1.read(int(bsize)))
         os.remove(tempname)
         self.fname = None
         self.meas_info = None
@@ -153,7 +153,7 @@ class EDFWriter():
                                                    meas_info['second'])
             fid.write(padtrim(hms, 8))
             fid.write(padtrim(str(meas_size + chan_size), 8))
-            fid.write(b' ' * 44)
+            fid.write(padtrim(meas_info['subtype'], 44))
             # the final n_records should be inserted on byte 236
             fid.write(padtrim(str(-1), 8))
             fid.write(padtrim(str(meas_info['record_length']), 8))
