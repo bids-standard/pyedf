@@ -44,12 +44,13 @@ from warnings import warn
 
 def padtrim(buf, num):
     num -= len(buf)
+    # for Python 3 compatibility, we have to explicitly convert str to bytes
     if num >= 0:
         # pad the input to the specified length
-        return str(buf) + ' ' * num
+        return str(buf).encode() + b' ' * num
     else:
         # trim the input to the specified length
-        return buf[0:num]
+        return (buf[0:num]).encode()
 
 
 ##############################################################################
@@ -106,7 +107,7 @@ class EDFWriter():
         self.n_records = 0
         return
 
-    def writeHeader(self, header, data):
+    def writeHeader(self, header):
         meas_info = header[0]
         chan_info = header[1]
         meas_size = 256
@@ -152,7 +153,7 @@ class EDFWriter():
                                                    meas_info['second'])
             fid.write(padtrim(hms, 8))
             fid.write(padtrim(str(meas_size + chan_size), 8))
-            fid.write(' ' * 44)
+            fid.write(b' ' * 44)
             # the final n_records should be inserted on byte 236
             fid.write(padtrim(str(-1), 8))
             fid.write(padtrim(str(meas_info['record_length']), 8))
@@ -179,11 +180,11 @@ class EDFWriter():
             for i in range(meas_info['nchan']):
                 fid.write(padtrim(str(chan_info['digital_max'][i]), 8))
             for i in range(meas_info['nchan']):
-                fid.write(' ' * 80)  # prefiltering
+                fid.write(b' ' * 80)  # prefiltering
             for i in range(meas_info['nchan']):
                 fid.write(padtrim(str(chan_info['n_samps'][i]), 8))
             for i in range(meas_info['nchan']):
-                fid.write(' ' * 32)  # reserved
+                fid.write(b' ' * 32)  # reserved
             meas_info['data_offset'] = fid.tell()
 
         self.meas_info = meas_info
@@ -382,10 +383,11 @@ class EDFReader():
         with open(self.fname, 'rb') as fid:
             assert(fid.tell() == 0)
             blocksize = np.sum(chan_info['n_samps']) * meas_info['data_size']
-            fid.seek(meas_info['data_offset'] + block * blocksize)
+            fid.seek(int(meas_info['data_offset'] + block * blocksize))
             for i in range(meas_info['nchan']):
-                buf = fid.read(chan_info['n_samps'][i]*meas_info['data_size'])
-                raw = unpack('<{}h'.format(chan_info['n_samps'][i]), buf)
+                bufsize = int(chan_info['n_samps'][i] * meas_info['data_size'])
+                buf = fid.read(bufsize)
+                raw = unpack('<{}h'.format(int(chan_info['n_samps'][i])), buf)
                 raw = np.asarray(raw, dtype=np.float32)
                 # FIXME I am not sure about the order of calibrate and offset
                 raw *= self.calibrate[i]
