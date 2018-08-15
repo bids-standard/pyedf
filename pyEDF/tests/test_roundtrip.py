@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2018 Phillip Alday <phillip.alday@mpi.nl>
 # License: BSD (3-clause)
-"""Round Trip Data IO tests."""
+"""Round Trip Data IO tests.
 
-from nose.tools import assert_dict_equal, assert_true
+    Note that these tests are *slow*. The entirety of each file is effectively
+    read in 3 times and written to disk once.
+"""
+
+from nose.tools import assert_dict_equal, assert_true, assert_sequence_equal
+import numpy as np
 
 from config_vars import data_path
 from os.path import join
@@ -40,24 +45,28 @@ def _roundtrip(edf_file):
     copy = pyEDF.EDFReader(fout)
 
     copy_header = copy.readHeader()
+
     assert_dict_equal(header[0], copy_header[0])
-    assert_dict_equal(header[1], copy_header[1])
+    for key in header[1]:
+        assert_sequence_equal(list(header[1][key]), list(copy_header[1][key]))
 
     for i in range(int(meas_info['n_records'])):
         # although this is floating point, it's not really numerics.
         # it's just comparing copies of the same data, so exact equality
         # should be a doable goal.
-        assert_equal(original.readBlock(), copy.readBlock())
+        for ch_orig, ch_copy in zip(original.readBlock(i), copy.readBlock(i)):
+            assert_sequence_equal(list(ch_orig), list(ch_copy))
 
     unlink(fout)
 
 def test_roundtrip_0601_s():
     '''Roundtrip of file 0601_s.edf'''
+    # this file seems to have bad physical_min values
     _roundtrip(join(data_path, '0601_s.edf'))
 
 def test_roundtrip_composition1_0s_to_1892s_fs20_15channels_tap127():
     '''Roundtrip of file composition1_0s_to_1892s_fs20_15channels_tap127.edf'''
-    _roundtrip(join(data_path, 'composition1_0s_to_1892s_fs20_15channels_tap127'))
+    _roundtrip(join(data_path, 'composition1_0s_to_1892s_fs20_15channels_tap127.edf'))
 
 
 def test_roundtrip_NY394_VisualLoc_R1():
