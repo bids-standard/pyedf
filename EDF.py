@@ -20,7 +20,20 @@ def padtrim(buf, num):
 
 # custom Sandeepan B
 def writebyte(file, content, encoding='utf8'):
-    file.write(bytes(content, encoding))
+    try:
+        # Py3 onwards bytes and strings are separate data format
+        content = bytes(content, encoding)
+    except TypeError:
+        # Py2.7 Support
+        pass
+    except Exception as e:
+        print(e)
+        print(
+            "If you see this message, please go to " + 
+            "https://github.com/bids-standard/pyedf/issues" + 
+            " and open an issue there regarding this. Thank you!")
+    finally:
+        file.write(content)
 
 
 ####################################################################################################
@@ -34,15 +47,18 @@ def writebyte(file, content, encoding='utf8'):
 
 class EDFWriter():
     def __init__(self, fname=None):
+        self.init_properties()
+        if fname:
+            self.open(fname)
+    
+    def init_properties(self):
         self.fname = None
         self.meas_info = None
         self.chan_info = None
         self.calibrate = None
         self.offset    = None
         self.n_records = 0
-        if fname:
-            self.open(fname)
-
+    
     def open(self, fname):
         with open(fname, 'wb') as fid:
             assert(fid.tell() == 0)
@@ -63,18 +79,12 @@ class EDFWriter():
                 fid2.write(fid1.read(236))
                 fid1.read(8)                                    # skip this part
                 writebyte(fid2, padtrim(str(self.n_records), 8))     # but write this instead
-                fid2.write(fid1.read(meas_info['data_offset'] - 236 - 8))
+                writebyte(fid2, fid1.read(meas_info['data_offset'] - 236 - 8))
                 blocksize = np.sum(chan_info['n_samps']) * meas_info['data_size']
                 for block in range(self.n_records):
-                    fid2.write(fid1.read(blocksize))
+                    writebyte(fid2, fid1.read(blocksize))
         os.remove(tempname)
-        self.fname = None
-        self.meas_info = None
-        self.chan_info = None
-        self.calibrate = None
-        self.offset    = None
-        self.n_records = 0
-        return
+        self.init_properties()
 
     def writeHeader(self, header):
         meas_info = header[0]
@@ -178,13 +188,16 @@ class EDFWriter():
 
 class EDFReader():
     def __init__(self, fname=None):
+        self.init_properties()
+        if fname:
+            self.open(fname)
+
+    def init_properties(self):
         self.fname = None
         self.meas_info = None
         self.chan_info = None
         self.calibrate = None
         self.offset    = None
-        if fname:
-            self.open(fname)
 
     def open(self, fname):
         with open(fname, 'rb') as fid:
@@ -194,11 +207,7 @@ class EDFReader():
         return self.meas_info, self.chan_info
 
     def close(self):
-        self.fname = None
-        self.meas_info = None
-        self.chan_info = None
-        self.calibrate = None
-        self.offset    = None
+        self.init_properties()
 
     def readHeader(self):
         # the following is copied over from MNE-Python and subsequently modified
@@ -236,7 +245,7 @@ class EDFReader():
             else:
                 meas_info['data_size'] = 2  # 16-bit (2 byte) integers
 
-            meas_info['n_records'] = n_records = int(fid.read(8).decode())
+            meas_info['n_records'] = int(fid.read(8).decode())
 
             # record length in seconds
             record_length = float(fid.read(8).decode())
@@ -252,10 +261,10 @@ class EDFReader():
             chan_info['ch_names']     = [fid.read(16).strip().decode() for ch in channels]
             chan_info['transducers']  = [fid.read(80).strip().decode() for ch in channels]
             chan_info['units']        = [fid.read(8).strip().decode() for ch in channels]
-            chan_info['physical_min'] = physical_min = np.array([float(fid.read(8).decode()) for ch in channels])
-            chan_info['physical_max'] = physical_max = np.array([float(fid.read(8).decode()) for ch in channels])
-            chan_info['digital_min']  = digital_min  = np.array([float(fid.read(8).decode()) for ch in channels])
-            chan_info['digital_max']  = digital_max  = np.array([float(fid.read(8).decode()) for ch in channels])
+            chan_info['physical_min'] = np.array([float(fid.read(8).decode()) for ch in channels])
+            chan_info['physical_max'] = np.array([float(fid.read(8).decode()) for ch in channels])
+            chan_info['digital_min']  = np.array([float(fid.read(8).decode()) for ch in channels])
+            chan_info['digital_max']  = np.array([float(fid.read(8).decode()) for ch in channels])
 
             prefiltering = [fid.read(80).strip().decode() for ch in channels][:-1]
             highpass     = np.ravel([re.findall('HP:\s+(\w+)', filt) for filt in prefiltering])
@@ -297,8 +306,7 @@ class EDFReader():
                 tot_samps = (os.path.getsize(self.fname)-meas_info['data_offset'])/meas_info['data_size']
                 meas_info['n_records'] = tot_samps/sum(n_samps)
 
-        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min']) / (
-            chan_info['digital_max'] - chan_info['digital_min'])
+        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min']) / (chan_info['digital_max'] - chan_info['digital_min'])
         self.offset    =  chan_info['physical_min'] - self.calibrate * chan_info['digital_min']
         for ch in channels:
             if self.calibrate[ch]<0:
