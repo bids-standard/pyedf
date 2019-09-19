@@ -14,24 +14,26 @@ user_input = int(input(input_str))
 filename = 'test_generator_2.edf'
 file_in = EDF.EDFReader()
 file_in.open(filename)
+header = file_in.read_header()
 
 if user_input in (1, 3):
-    print("Following are data blocks from the EDF file.")
-    print (file_in.readSamples(0, 0, 0))
-    print (file_in.readSamples(0, 0, 128))
+    print("Following are data blocks from the EDF file.\n")
+    print(file_in.read_samples(0, 0, 0))
+    print('\n')
+    print(file_in.read_samples(0, 0, 128))
+    print('\n')
+    print(header)
+
 
 if user_input in (2, 3):
     file_out = EDF.EDFWriter()
     file_out.open('copy of ' + filename)
-
-    header = file_in.readHeader()
-    print(header)
-    file_out.writeHeader(header)
-
+    file_out.write_header(header)
+    
     meas_info = header[0]
     for i in range(meas_info['n_records']):
-        data = file_in.readBlock(i)
-        file_out.writeBlock(data)
+        data = file_in.read_block(i)
+        file_out.write_block(data)
     file_out.close()
 
 file_in.close()
