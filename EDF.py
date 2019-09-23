@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """ pyedf is a python package to read from and write EEG data to European Data 
     Format files. Since EDF is such a widely used format, there exist multiple 
     Python implementations for reading and writing EDF files. However, most of 
@@ -42,6 +41,7 @@ import os
 import re
 import warnings
 
+
 def padtrim(buf, num):
     """ Calibate the length w.r.t. buffer parameter and pad the input if the
         calibrated length >= 0 (zero). Else trim (slice) the input using it.
@@ -72,7 +72,8 @@ def writebyte(file, content, encoding='utf8'):
         # Py2.7 Support
         pass
     except Exception as e:
-        print(e)
+        print(type(e))
+        print(str(e))
         print(
             "If you see this message, please go to " + 
             "https://github.com/bids-standard/pyedf/issues" + 
@@ -80,7 +81,6 @@ def writebyte(file, content, encoding='utf8'):
     finally:
         file.write(content)
 
-###############################################################################
 
 class EDFWriter():
     """ Writes EEG Data into BIDS-Standard Compliant EDF/EDF+/BDF/BDF+ files.
@@ -342,7 +342,6 @@ class EDFWriter():
                     fid.write(val)
             self.n_records += 1
 
-####################################################################################################
 
 class EDFReader():
     """ Reads EEG Data from BIDS-Standard Compliant EDF/EDF+/BDF/BDF+ files.
@@ -356,11 +355,24 @@ class EDFReader():
 
         Methods:
             init_properties:    Used to initialize/reset class attributes.
-            open:   Creates a new file for writing data.
-            close:  Closes the file after writing data.
-            write_header:   Writes the header record to the file.
-            write_block:    Writes the data records to the file.
+            open:   Opens an existing file to read data.
+            close:  Closes the file after reading data.
+            read_header:   Reads the header record from the file.
+            read_block:    Reads the data record blocks from the file.
+            read_samples:  Reads the data samples from the file.
+        
+        Helper Methods: The following are a number of helper functions to make 
+                        the behaviour of this EDFReader class more similar to 
+                        https://bitbucket.org/cleemesser/python-edf/
+            get_signal_text_labels: Convert Signal Text Labels from unicode 
+                                    to strings.
+            get_n_signals:      Get Number of Channels.
+            get_signal_freqs:   Get Signal Frequencies.
+            get_n_samples:      Get Total Number of Samples.
+            read_signal:        Reads Entire Signal Record and returns the 
+                                values as an array.
     """
+
     def __init__(self, fname=None):
         """ Class Initializer. Calls init_properties() method to initialize.
 
@@ -400,7 +412,7 @@ class EDFReader():
         self.init_properties()
 
     def read_header(self):
-        """ Reads header rcord from file.
+        """ Reads header record from file.
             
             The contents were copied over from MNE-Python and subsequently 
             modified to closely reflect the native EDF File standard.
@@ -454,9 +466,10 @@ class EDFReader():
                     "for recordlength. Default record length set to 1.")
             else:
                 meas_info['record_length'] = record_length
-            meas_info['nchan'] = nchan = int(fid.read(4).decode())
 
-            channels = list(range(nchan))
+            meas_info['nchan'] = int(fid.read(4).decode())
+            channels = list(range(meas_info['nchan']))
+
             chan_info['ch_names']     = [
                 fid.read(16).strip().decode() for ch in channels]
             chan_info['transducers']  = [
@@ -515,7 +528,7 @@ class EDFReader():
             assert fid.tell() == header_nbyte
 
             if meas_info['n_records']==-1:
-                # this happens if the n_records is not updated at the end of recording
+                # happens if n_records is not updated at the end of recording
                 tot_samps = (
                     os.path.getsize(self.fname)-meas_info['data_offset']
                     ) / meas_info['data_size']
@@ -537,6 +550,15 @@ class EDFReader():
         return (meas_info, chan_info)
 
     def read_block(self, block):
+        """ Reads data records blockwise.
+
+            Arguments:
+                block (int):    indicates block number in file.
+            
+            Example:
+                If you want to read data block 63 from file, use read_block(63)
+        """
+
         assert(block>=0)
         meas_info = self.meas_info
         chan_info = self.chan_info
@@ -559,6 +581,14 @@ class EDFReader():
         return data
 
     def read_samples(self, channel, begsample, endsample):
+        """ Reads data sample from data block in file.
+
+            Arguments:
+                channel (int):  Indicates channel number.
+                begsample (int): Value of beginning sample (to start reading)
+                endsample (int): Value of ending sample (to stop reading)
+        """
+
         meas_info = self.meas_info
         chan_info = self.chan_info
         n_samps = chan_info['n_samps'][channel]
@@ -569,37 +599,43 @@ class EDFReader():
             data = np.append(data, self.read_block(block)[channel])
         begsample -= begblock*n_samps
         endsample -= begblock*n_samps
-        return data[begsample:(endsample+1)]
-
-####################################################################################################
-# the following are a number  of helper functions to make the behaviour of this EDFReader
-# class more similar to https://bitbucket.org/cleemesser/python-edf/
-####################################################################################################
+        return data[begsample:(endsample + 1)]
 
     def get_signal_text_labels(self):
-        # convert from unicode to string
+        """ Convert Signal Text Labels from unicode to string."""
+
         return [str(x) for x in self.chan_info['ch_names']]
 
     def get_n_signals(self):
+        """ Get Number of Channels."""
+
         return self.meas_info['nchan']
 
     def get_signal_freqs(self):
+        """ Get Signal Frequencies."""
+
         return self.chan_info['n_samps'] / self.meas_info['record_length']
 
     def get_n_samples(self):
+        """ Get Total Number of Samples."""
+
         return self.chan_info['n_samps'] * self.meas_info['n_records']
 
     def read_signal(self, chanindx):
+        """ Reads Entire Signal Record and returns the values as an array.
+
+            Arguments:
+                chanindx: Indicates channel index.
+        """
+        
         begsample = 0
         endsample = (
             self.chan_info['n_samps'][chanindx] * self.meas_info['n_records']
             ) - 1
         return self.read_samples(chanindx, begsample, endsample)
 
-##########################################################################
 
 if __name__ == "__main__":
-    # Edit the name of files to test out EDFReader and EDFWriter class
     input_str = (
         "Type 1 to only read from test EDF file.\n" +
         "Type 2 to only write from test EDF file.\n" +
@@ -607,23 +643,26 @@ if __name__ == "__main__":
         "Press Enter after typing your choice: ")
     user_input = int(input(input_str))
 
+    # Edit the filename variable to test out EDFReader and EDFWriter class 
+    # with different files.
     filename = 'test_generator_2.edf'
     file_in = EDFReader()
     file_in.open(filename)
+    header = file_in.read_header()
 
     if user_input in (1, 3):
-        print("Following are data blocks from the EDF file.")
-        print (file_in.read_samples(0, 0, 0))
-        print (file_in.read_samples(0, 0, 128))
+        print("Following are data blocks from the EDF file.\n")
+        print(file_in.read_samples(0, 0, 0))
+        print('\n')
+        print(file_in.read_samples(0, 0, 128))
+        print('\n')
+        print(header)
 
     if user_input in (2, 3):
         file_out = EDFWriter()
         file_out.open('copy of ' + filename)
-
-        header = file_in.read_header()
-        print(header)
         file_out.write_header(header)
-
+        
         meas_info = header[0]
         for i in range(meas_info['n_records']):
             data = file_in.read_block(i)
