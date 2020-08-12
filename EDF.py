@@ -41,7 +41,6 @@ import os
 import re
 from warnings import warn
 
-countS = countN = 0
 
 def padtrim(buf, num):
     num -= len(buf)
@@ -53,13 +52,6 @@ def padtrim(buf, num):
         return buf[0:num]
 
 def writebyte(file, content, encoding='ascii'):
-    # format non-string inputs to string
-    global countN, countS
-    if not isinstance(content, str):
-        content = str(content)
-        countS = countS + 1
-    else:
-        countN = countN + 1
     try:
         # Py3 onwards bytes and strings are separate data format
         content = bytes(content, encoding)
@@ -126,12 +118,12 @@ class EDFWriter():
                 # but write this instead
                 writebyte(fid2, padtrim(str(self.n_records), 8))
 
-                writebyte(fid2, fid1.read(meas_info['data_offset'] - 236 - 8))
+                writebyte(fid2, str(fid1.read(meas_info['data_offset'] - 236 - 8)))
                 
                 blocksize = np.sum(chan_info['n_samps']) * meas_info['data_size']
                 
                 for block in range(self.n_records):
-                    writebyte(fid2, fid1.read(blocksize))
+                    writebyte(fid2, str(fid1.read(blocksize)))
         
         os.remove(tempname)
         self._initial_state()
@@ -477,4 +469,3 @@ if __name__ == "__main__":
         file_out.close()
 
     file_in.close()
-    print(countS, countN)
