@@ -1,6 +1,3 @@
 # Exclude these dirs
 /_pycache_/
 /.vscode/
-
-# files
-EDF Docs.py
