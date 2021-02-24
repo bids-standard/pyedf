@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2018 Phillip Alday <phillip.alday@mpi.nl>
+# Copyright (C) 2018 Phillip Alday <me@phillipalday.com>
 # License: BSD (3-clause)
 
 import os.path as op

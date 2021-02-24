@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 '''
 Copyright (C) 2016-2018 Robert Ooostenveld <r.oostenveld@donders.ru.nl>
-              2018 Phillip Alday <phillip.alday@mpi.nl>
+              2018 Phillip Alday <me@phillipalday.com>
 
 All rights reserved.
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2018 Phillip Alday <phillip.alday@mpi.nl>
+# Copyright (C) 2018 Phillip Alday <me@phillipalday.com>
 # License: BSD (3-clause)
 """Round Trip Data IO tests.
 
@@ -85,4 +85,3 @@ def test_roundtrip_testAlphaIR20170321_0():
 def test_roundtrip_test_generator():
     '''Roundtrip of file test_generator.edf'''
     _roundtrip(join(data_path, 'test_generator.edf'))
-

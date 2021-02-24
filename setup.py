@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2018 Phillip Alday <phillip.alday@mpi.nl>
+# Copyright (C) 2018 Phillip Alday <me@phillipalday.com>
 #
 # All rights reserved.
 #
@@ -54,7 +54,7 @@ DESCRIPTION = descr
 AUTHOR = 'Robert Oostenveld'
 AUTHOR_EMAIL = 'r.oostenveld@donders.ru.nl'
 MAINTAINER = 'Phillip Alday'
-MAINTAINER_EMAIL = 'phillip.alday@mpi.nl'
+MAINTAINER_EMAIL = 'me@phillipalday.com'
 URL = 'https://github.com/robertoostenveld/pyEDF'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/robertoostenveld/pyEDF'
@@ -99,4 +99,3 @@ if __name__ == "__main__":
           platforms='any',
           packages=package_tree(PACKAGE_NAME),
     )
-
