@@ -91,7 +91,7 @@ def set_offset(chan_obj):
         Arguments:
             chan_obj (dict):    Dictionary containing channel information.
     """
-
+    
     physical_range = chan_obj['physical_max'] - chan_obj['physical_min']
     digital_range = chan_obj['digital_max'] - chan_obj['digital_min']
     calibrate = physical_range / digital_range
@@ -125,7 +125,7 @@ class EDFWriter():
             Arguments:
                 fname(str): Name of the to-be-created file.
         """
-
+        
         self._initial_state()
         if fname:
             self.open(fname)
@@ -206,7 +206,7 @@ class EDFWriter():
                         'ch_names', 'n_samps', 'units', 
                         'digital_min'}
         """
-        
+
         meas_info = header[0]
         chan_info = header[1]
         meas_size = 256
@@ -314,7 +314,7 @@ class EDFWriter():
                 data (list):    A numpy array of 16-bit integer value 
                                 representation of signal records.
         """
-
+        
         meas_info = self.meas_info
         chan_info = self.chan_info
         with open(self.fname, 'ab') as fid:
@@ -412,7 +412,7 @@ class EDFReader():
             The contents were copied over from MNE-Python and subsequently 
             modified to closely reflect the native EDF File standard.
         """
-
+        
         meas_info = {}
         chan_info = {}
         with open(self.fname, 'rb') as fid:
@@ -502,7 +502,7 @@ class EDFReader():
 
             fid.read(32 *meas_info['nchan']).decode()  # reserved
             assert fid.tell() == header_nbyte
-
+            
             if meas_info['n_records'] == -1:
                 # happens if n_records is not updated at the end of recording
                 file_size = os.path.getsize(self.fname)
@@ -529,7 +529,7 @@ class EDFReader():
             Example:
                 If you want to read data block 63 from file, use read_block(63)
         """
-
+  
         assert block >= 0
         meas_info = self.meas_info
         chan_info = self.chan_info
@@ -556,7 +556,7 @@ class EDFReader():
                 begsample (int): Value of beginning sample (to start reading)
                 endsample (int): Value of ending sample (to stop reading)
         """
-
+  
         meas_info = self.meas_info
         chan_info = self.chan_info
         n_samps = chan_info['n_samps'][channel]
