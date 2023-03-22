@@ -138,24 +138,24 @@ class EDFWriter():
             assert fid.tell() == 0
 
             # fill in the missing or incomplete information
-            if not 'subject_id' in meas_info:
+            if 'subject_id' not in meas_info:
                 meas_info['subject_id'] = ''
             
-            if not 'recording_id' in meas_info:
+            if 'recording_id' not in meas_info:
                 meas_info['recording_id'] = ''
             
-            if not 'subtype' in meas_info:
+            if 'subtype' not in meas_info:
                 meas_info['subtype'] = 'edf'
             
             nchan = meas_info['nchan']
             
-            if ((not 'ch_names' in chan_info) or (len(chan_info['ch_names']) < nchan)):
+            if (('ch_names' not in chan_info) or (len(chan_info['ch_names']) < nchan)):
                 chan_info['ch_names'] = [str(i) for i in range(nchan)]
             
-            if ((not 'transducers' in chan_info) or (len(chan_info['transducers']) < nchan)):
+            if (('transducers' not in chan_info) or (len(chan_info['transducers']) < nchan)):
                 chan_info['transducers'] = ['' for i in range(nchan)]
             
-            if ((not 'units' in chan_info) or (
+            if (('units' not in chan_info) or (
                 len(chan_info['units']) < nchan)):
                 chan_info['units'] = ['' for i in range(nchan)]
 
