@@ -134,13 +134,13 @@ class EDFWriter():
 
         self.meas_info = meas_info
         self.chan_info = chan_info
-        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min'])/(chan_info['digital_max'] - chan_info['digital_min']);
-        self.offset    =  chan_info['physical_min'] - self.calibrate * chan_info['digital_min'];
+        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min'])/(chan_info['digital_max'] - chan_info['digital_min'])
+        self.offset    =  chan_info['physical_min'] - self.calibrate * chan_info['digital_min']
         channels = list(range(meas_info['nchan']))
         for ch in channels:
             if self.calibrate[ch]<0:
-              self.calibrate[ch] = 1;
-              self.offset[ch]    = 0;
+              self.calibrate[ch] = 1
+              self.offset[ch]    = 0
 
     def writeBlock(self, data):
         meas_info = self.meas_info
@@ -152,9 +152,9 @@ class EDFWriter():
 
                 assert(len(raw)==chan_info['n_samps'][i])
                 if min(raw)<chan_info['physical_min'][i]:
-                    warnings.warn('Value exceeds physical_min: ' + str(min(raw)) );
+                    warnings.warn('Value exceeds physical_min: ' + str(min(raw)) )
                 if max(raw)>chan_info['physical_max'][i]:
-                    warnings.warn('Value exceeds physical_max: '+ str(max(raw)));
+                    warnings.warn('Value exceeds physical_max: '+ str(max(raw)))
 
                 raw -= self.offset[i]  # FIXME I am not sure about the order of calibrate and offset
                 raw /= self.calibrate[i]
@@ -288,12 +288,12 @@ class EDFReader():
                 tot_samps = (os.path.getsize(self.fname)-meas_info['data_offset'])/meas_info['data_size']
                 meas_info['n_records'] = tot_samps/sum(n_samps)
 
-        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min'])/(chan_info['digital_max'] - chan_info['digital_min']);
-        self.offset    =  chan_info['physical_min'] - self.calibrate * chan_info['digital_min'];
+        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min'])/(chan_info['digital_max'] - chan_info['digital_min'])
+        self.offset    =  chan_info['physical_min'] - self.calibrate * chan_info['digital_min']
         for ch in channels:
             if self.calibrate[ch]<0:
-              self.calibrate[ch] = 1;
-              self.offset[ch]    = 0;
+              self.calibrate[ch] = 1
+              self.offset[ch]    = 0
 
         self.meas_info = meas_info
         self.chan_info = chan_info
@@ -348,8 +348,8 @@ class EDFReader():
         return self.chan_info['n_samps'] * self.meas_info['n_records']
 
     def readSignal(self, chanindx):
-        begsample = 0;
-        endsample = self.chan_info['n_samps'][chanindx] * self.meas_info['n_records'] - 1;
+        begsample = 0
+        endsample = self.chan_info['n_samps'][chanindx] * self.meas_info['n_records'] - 1
         return self.readSamples(chanindx, begsample, endsample)
 
 ####################################################################################################
