@@ -11,4 +11,5 @@ Since EDF is such a widely used format, there exist multiple implementations for
 ## See also
   - http://www.edfplus.info
   - https://github.com/holgern/pyedflib
+  - https://github.com/the-siesta-group/edfio
   - https://github.com/MNE-tools/MNE-python
